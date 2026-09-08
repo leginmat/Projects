@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flight Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board-bg:#14181d;
+    --board-bg-raised:#1b2129;
+    --board-edge:#0a0d10;
+    --amber:#f2a53c;
+    --amber-dim:#7a5a26;
+    --text-soft:#93a0ac;
+    --text-faint:#5b6670;
+    --green:#5fb789;
+    --red:#c9634f;
+    --divider:#262d35;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--board-edge);
+    font-family:'Space Grotesk', sans-serif;
+    color:var(--text-soft);
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+
+  .masthead{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:1px solid var(--divider);
+  }
+  .masthead h1{
+    font-size:22px;
+    font-weight:600;
+    color:#e8ecef;
+    margin:0;
+    letter-spacing:0.2px;
+  }
+  .masthead .clock{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--text-faint);
+  }
+
+  .board{
+    background:var(--board-bg);
+    border-radius:6px;
+    overflow:hidden;
+    box-shadow:0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+
+  .row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    align-items:center;
+    padding:16px 18px;
+    border-bottom:1px solid var(--divider);
+  }
+  .row:last-child{border-bottom:none;}
+
+  .flight-id{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:19px;
+    font-weight:600;
+    color:var(--amber);
+    letter-spacing:1px;
+  }
+  .flight-label{
+    font-size:13px;
+    color:var(--text-faint);
+    margin-top:3px;
+  }
+  .flight-label.empty{
+    font-style:italic;
+    color:var(--text-faint);
+    opacity:0.6;
+  }
+
+  .actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .track-btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12.5px;
+    font-weight:500;
+    color:#e8ecef;
+    background:var(--board-bg-raised);
+    border:1px solid var(--divider);
+    border-radius:4px;
+    padding:7px 11px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .track-btn:hover{border-color:var(--amber-dim);color:var(--amber);}
+
+  .remove-btn{
+    font-size:12px;
+    color:var(--text-faint);
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:7px 4px;
+  }
+  .remove-btn:hover{color:var(--red);}
+
+  .empty-state{
+    padding:40px 18px;
+    text-align:center;
+    color:var(--text-faint);
+    font-size:14px;
+    line-height:1.6;
+  }
+
+  .add-bar{
+    display:flex;
+    gap:8px;
+    margin-top:16px;
+  }
+  .add-bar input{
+    font-family:'IBM Plex Mono', monospace;
+    background:var(--board-bg);
+    border:1px solid var(--divider);
+    color:#e8ecef;
+    border-radius:5px;
+    padding:11px 12px;
+    font-size:14px;
+    outline:none;
+  }
+  .add-bar input::placeholder{color:var(--text-faint);font-family:'Space Grotesk',sans-serif;}
+  .add-bar input:focus{border-color:var(--amber-dim);}
+  #flightNum{width:130px;text-transform:uppercase;}
+  #flightLabel{flex:1;}
+  .add-btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:14px;
+    background:var(--amber);
+    color:#20140a;
+    border:none;
+    border-radius:5px;
+    padding:0 18px;
+    cursor:pointer;
+  }
+  .add-btn:hover{filter:brightness(1.08);}
+
+  .footnote{
+    margin-top:18px;
+    font-size:12.5px;
+    color:var(--text-faint);
+    line-height:1.6;
+  }
+
+  .track-all{
+    margin-top:14px;
+    text-align:right;
+  }
+  .track-all button{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:13px;
+    color:var(--green);
+    background:none;
+    border:1px solid var(--divider);
+    border-radius:5px;
+    padding:8px 14px;
+    cursor:pointer;
+  }
+  .track-all button:hover{border-color:var(--green);}
+
+  .status{
+    font-size:12px;
+    color:var(--text-faint);
+    margin-top:8px;
+    min-height:14px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>Flight Board</h1>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div class="track-all" id="trackAllWrap" style="display:none;">
+    <button id="trackAllBtn">Open all flights</button>
+  </div>
+
+  <div class="add-bar">
+    <input id="flightNum" placeholder="UA123" maxlength="8">
+    <input id="flightLabel" placeholder="Label — e.g. Mom, SEA→SYD">
+    <button class="add-btn" id="addBtn">Add</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  <div class="footnote">
+    Each flight opens live tracking on FlightAware or Flightradar24 in a new tab — this board just keeps your list and the shortcuts, it doesn't embed live positions itself. Your list is saved on this device, so bookmark this page to check it daily. If your browser blocks "Open all flights" as a popup, allow popups for this page once.
+  </div>
+
+</div>
+
+<script>
+const board = document.getElementById('board');
+const trackAllWrap = document.getElementById('trackAllWrap');
+const statusEl = document.getElementById('status');
+let flights = [];
+
+function tick(){
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString([], {weekday:'short', hour:'2-digit', minute:'2-digit'});
+}
+tick();
+setInterval(tick, 30000);
+
+function faUrl(ident){
+  return 'https://www.flightaware.com/live/flight/' + encodeURIComponent(ident.toUpperCase());
+}
+function fr24Url(ident){
+  return 'https://www.flightradar24.com/data/flights/' + encodeURIComponent(ident.toLowerCase());
+}
+
+function render(){
+  board.innerHTML = '';
+  if(flights.length === 0){
+    board.innerHTML = '<div class="empty-state">No flights on the board yet.<br>Add a flight number below to start tracking.</div>';
+    trackAllWrap.style.display = 'none';
+    return;
+  }
+  trackAllWrap.style.display = 'block';
+  flights.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div>
+        <div class="flight-id">${f.num}</div>
+        <div class="flight-label ${f.label ? '' : 'empty'}">${f.label || 'no label'}</div>
+      </div>
+      <div class="actions">
+        <button class="track-btn" data-action="fa" data-i="${i}">FlightAware</button>
+        <button class="track-btn" data-action="fr24" data-i="${i}">Flightradar24</button>
+        <button class="remove-btn" data-action="remove" data-i="${i}" title="Remove">✕</button>
+      </div>
+    `;
+    board.appendChild(row);
+  });
+}
+
+board.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if(!btn) return;
+  const i = parseInt(btn.dataset.i, 10);
+  const f = flights[i];
+  if(btn.dataset.action === 'fa') window.open(faUrl(f.num), '_blank');
+  if(btn.dataset.action === 'fr24') window.open(fr24Url(f.num), '_blank');
+  if(btn.dataset.action === 'remove'){
+    flights.splice(i, 1);
+    save();
+    render();
+  }
+});
+
+document.getElementById('trackAllBtn').addEventListener('click', () => {
+  flights.forEach(f => window.open(faUrl(f.num), '_blank'));
+});
+
+document.getElementById('addBtn').addEventListener('click', addFlight);
+document.getElementById('flightLabel').addEventListener('keydown', e => { if(e.key === 'Enter') addFlight(); });
+document.getElementById('flightNum').addEventListener('keydown', e => { if(e.key === 'Enter') addFlight(); });
+
+function addFlight(){
+  const numInput = document.getElementById('flightNum');
+  const labelInput = document.getElementById('flightLabel');
+  const num = numInput.value.trim().toUpperCase();
+  const label = labelInput.value.trim();
+  if(!num){
+    statusEl.textContent = 'Enter a flight number first, like UA123.';
+    return;
+  }
+  flights.push({num, label});
+  numInput.value = '';
+  labelInput.value = '';
+  statusEl.textContent = '';
+  save();
+  render();
+  numInput.focus();
+}
+
+async function load(){
+  try{
+    const result = await window.storage.get('flights', false);
+    flights = result && result.value ? JSON.parse(result.value) : [];
+  }catch(err){
+    flights = [];
+  }
+  render();
+}
+
+async function save(){
+  try{
+    const result = await window.storage.set('flights', JSON.stringify(flights), false);
+    if(!result){
+      statusEl.textContent = 'Could not save — your list may not persist after this session.';
+    }
+  }catch(err){
+    statusEl.textContent = 'Could not save — your list may not persist after this session.';
+  }
+}
+
+load();
+</script>
+</body>
+</html>
